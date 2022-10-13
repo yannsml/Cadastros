@@ -105,7 +105,7 @@ router.get("/",async(req,res)=>{
         }
 
         if(result.rowCount<parseInt(req.query.limit)){
-            for(let i=result.rowCount;i<6;i++){
+            for(let i=result.rowCount;i<parseInt(req.query.limit);i++){
                 list.push({
                     "id":null,
                     "nome":"",

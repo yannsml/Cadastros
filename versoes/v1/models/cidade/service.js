@@ -14,13 +14,16 @@ const consultarCidade = async(idcidade,
     try{
         await conexao.query('BEGIN')
         let values = [idcidade,idestado,nomecidade,idigbe,ativo]
-        let query = `select * 
-                        from cidade
-                       where (idcidade = $1 or $1 is null)
-                         and (idestado = $2 or $2 is null)
-                         and (nomecidade ilike '%'||$3||'%' or $3 is null)
-                         and (idigbe = $4 or $4 is null)
-                         and ativo = $5`
+        let query = `select c.*,
+                            e.nomeestado,
+                            e.ufestado 
+                    from cidade as c
+                    inner join estado e on c.idestado = e.idestado 
+                    where (c.idcidade  = $1 or $1 is null)
+                    and (c.idestado  = $2 or $2 is null)
+                    and (c.nomecidade  ilike '%'||$3||'%' or $3 is null)
+                    and (c.idigbe = $4 or $4 is null)
+                    and c.ativo = $5`
         let result = await conexao.query(query, values)
         await conexao.query('COMMIT')
         return result
@@ -44,13 +47,125 @@ const consultarCidadeExato = async(idcidade,
     try{
         await conexao.query('BEGIN')
         let values = [idcidade,idestado,nomecidade,idigbe,ativo]
-        let query = `select * 
-                        from cidade
-                       where (idcidade = $1 or $1 is null)
-                         and (idestado = $2 or $2 is null)
-                         and (nomecidade = $3 or $3 is null)
-                         and (idigbe = $4 or $4 is null)
-                         and ativo = $5`
+        let query = `select c.*,
+                            e.nomeestado,
+                            e.ufestado 
+                    from cidade as c
+                    inner join estado e on c.idestado = e.idestado 
+                    where (c.idcidade  = $1 or $1 is null)
+                    and (c.idestado  = $2 or $2 is null)
+                    and (c.nomecidade  = $3 or $3 is null)
+                    and (c.idigbe = $4 or $4 is null)
+                    and c.ativo = $5`
+        let result = await conexao.query(query, values)
+        await conexao.query('COMMIT')
+        return result
+    }
+    catch(erro){
+        console.log(erro)
+        await conexao.query('ROLLBACK')
+        throw erro
+    }
+    finally{
+          conexao.release()
+    }
+}
+
+const contarConsultarCidade = async(idcidade,
+                                    idestado,
+                                    nomecidade,
+                                    idigbe,
+                                    ativo)=>{
+    const conexao = await pool.connect()                              
+    try{
+        await conexao.query('BEGIN')
+        let values = [idcidade,idestado,nomecidade,idigbe,ativo]
+        let query = `select count(1)
+                    from cidade as c
+                    inner join estado e on c.idestado = e.idestado 
+                    where (c.idcidade  = $1 or $1 is null)
+                    and (c.idestado  = $2 or $2 is null)
+                    and (c.nomecidade ilike '%'||$3||'%' or $3 is null)
+                    and (c.idigbe = $4 or $4 is null)
+                    and c.ativo = $5`
+        let result = await conexao.query(query, values)
+        await conexao.query('COMMIT')
+        return result
+    }
+    catch(erro){
+        console.log(erro)
+        await conexao.query('ROLLBACK')
+        throw erro
+    }
+    finally{
+          conexao.release()
+    }
+}
+
+const consultarCidadePaginacaoDesc = async(idcidade,
+                                            idestado,
+                                            nomecidade,
+                                            idigbe,
+                                            ativo,
+                                            orderby,
+                                            offset,
+                                            limit)=>{
+    const conexao = await pool.connect()                              
+    try{
+        await conexao.query('BEGIN')
+        let values = [idcidade,idestado,nomecidade,idigbe,ativo,offset,limit]
+        let query = `select c.*,
+                            e.nomeestado,
+                            e.ufestado 
+                       from cidade as c
+                      inner join estado e on c.idestado = e.idestado 
+                      where (c.idcidade  = $1 or $1 is null)
+                        and (c.idestado  = $2 or $2 is null)
+                        and (c.nomecidade ilike '%'||$3||'%' or $3 is null)
+                        and (c.idigbe = $4 or $4 is null)
+                        and c.ativo = $5
+                       order by ${orderby} desc
+                      offset $6
+                       limit $7`
+        let result = await conexao.query(query, values)
+        await conexao.query('COMMIT')
+        return result
+    }
+    catch(erro){
+        console.log(erro)
+        await conexao.query('ROLLBACK')
+        throw erro
+    }
+    finally{
+          conexao.release()
+    }
+}
+
+const consultarCidadePaginacaoCres = async(idcidade,
+                                            idestado,
+                                            nomecidade,
+                                            idigbe,
+                                            ativo,
+                                            orderby,
+                                            offset,
+                                            limit)=>{
+    const conexao = await pool.connect()                              
+    try{
+        await conexao.query('BEGIN')
+        let values = [idcidade,idestado,nomecidade,idigbe,ativo,offset,limit]
+        let query = `select c.*,
+                            e.nomeestado,
+                            e.ufestado 
+                       from cidade as c
+                      inner join estado e on c.idestado = e.idestado 
+                      where (c.idcidade  = $1 or $1 is null)
+                        and (c.idestado  = $2 or $2 is null)
+                        and (c.nomecidade ilike '%'||$3||'%' or $3 is null)
+                        and (c.idigbe = $4 or $4 is null)
+                        and c.ativo = $5
+                      order by ${orderby}
+                     offset $6
+                      limit $7`
         let result = await conexao.query(query, values)
         await conexao.query('COMMIT')
         return result
@@ -145,5 +260,8 @@ module.exports={
     criarCidade,
     desativarCidade,
     alterarCidade,
+    contarConsultarCidade,
+    consultarCidadePaginacaoDesc,
+    consultarCidadePaginacaoCres,
     consultarCidadeExato
 }

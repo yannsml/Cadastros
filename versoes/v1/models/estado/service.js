@@ -78,7 +78,7 @@ const consultarEstadoPaginacaoDesc = async(idestado,
                          and (nomeestado ilike '%'||$2||'%' or $2 is null)
                          and (ufestado = $3 or $3 is null)
                          and ativo = $4
-                       order by ${orderby} desc\
+                       order by ${orderby} desc
                       offset $5\
                        limit $6`
         let result = await conexao.query(query, values)
